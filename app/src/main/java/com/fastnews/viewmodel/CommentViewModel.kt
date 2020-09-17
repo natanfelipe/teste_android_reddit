@@ -14,7 +14,6 @@ class CommentViewModel : ViewModel() {
 
     private lateinit var comments: MutableLiveData<List<CommentData>>
 
-    @UiThread
     fun getComments(postId: String): LiveData<List<CommentData>> {
         if(!::comments.isInitialized) {
             comments = MutableLiveData()
