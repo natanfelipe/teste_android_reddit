@@ -132,6 +132,12 @@ dependencies {
         exclude group: "com.android.support"
     }
 
+    //Koin
+    implementation "org.koin:koin-androidx-scope:$koin_version"
+    implementation "org.koin:koin-androidx-viewmodel:$koin_version"
+    implementation "org.koin:koin-core-ext:$koin_version"
+
+
     // Bottom sheet
     implementation 'com.flipboard:bottomsheet-core:1.5.0'
 
