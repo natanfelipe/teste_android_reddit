@@ -1,9 +1,12 @@
 package com.fastnews.ui.timeline
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.FragmentNavigatorExtras
@@ -13,6 +16,7 @@ import com.fastnews.R
 import com.fastnews.common.gone
 import com.fastnews.common.hasInternetConnection
 import com.fastnews.common.visible
+import com.fastnews.databinding.FragmentTimelineBindingImpl
 import com.fastnews.service.model.PostData
 import com.fastnews.ui.detail.DetailFragment.Companion.KEY_POST
 import com.fastnews.viewmodel.PostViewModel
@@ -20,17 +24,34 @@ import kotlinx.android.synthetic.main.fragment_timeline.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
-class TimelineFragment : Fragment(R.layout.fragment_timeline) {
+class TimelineFragment : Fragment() {
 
     private val postViewModel: PostViewModel by viewModel()
     private lateinit var adapter: TimelineAdapter
 
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val binding = DataBindingUtil.inflate<FragmentTimelineBindingImpl>(
+            inflater, R.layout.fragment_timeline, container, false
+        )
+
+        binding.apply {
+            viewModel = postViewModel
+            lifecycleOwner = viewLifecycleOwner
+        }
+
+        return binding.root
+    }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         buildActionBar()
         buildTimeline()
-        verifyConnectionState()
+        fetchTimeline()
+        //verifyConnectionState()
     }
 
     private fun verifyConnectionState() {
@@ -67,12 +88,10 @@ class TimelineFragment : Fragment(R.layout.fragment_timeline) {
     }
 
     private fun fetchTimeline() {
-        postViewModel.getPosts("", 50).observe(viewLifecycleOwner, Observer { posts ->
-            posts.let {
-                adapter.setData(posts)
-                hideProgress()
-                showPosts()
-            }
+        postViewModel.loadData(requireContext().hasInternetConnection())
+        postViewModel.posts.observe(viewLifecycleOwner, Observer { postsList->
+            showPosts()
+            adapter.submitList(postsList)
         })
     }
 

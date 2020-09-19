@@ -4,12 +4,18 @@ import android.view.View
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.paging.LivePagedListBuilder
+import androidx.paging.PagedList
+import com.fastnews.common.PAGE_SIZE
+import com.fastnews.datasource.TimelineDataSourceFactory
 import com.fastnews.mechanism.Coroutines
 import com.fastnews.repository.PostRepository
 import com.fastnews.service.model.PostData
 
 class PostViewModel : ViewModel() {
 
+    private val ioScope = viewModelScope
     private var mutablePostListVisibility = MutableLiveData<Int>().apply { View.GONE }
     val postListVisibility: LiveData<Int>
         get() = mutablePostListVisibility
@@ -20,33 +26,32 @@ class PostViewModel : ViewModel() {
     val errorMessageVisibility: LiveData<Int>
         get() = mutableErrorMessageVisibility
 
-    private lateinit var posts: MutableLiveData<List<PostData>>
 
-    fun init(hasInternetConnection: Boolean): Boolean {
-        mutableProgressVisibility.postValue(View.VISIBLE)
+    private val pagedListConfig by lazy {
+        PagedList.Config.Builder()
+            .setPageSize(PAGE_SIZE)
+            .setInitialLoadSizeHint(PAGE_SIZE*2)
+            .setEnablePlaceholders(false)
+            .build()
+    }
 
-        return if (hasInternetConnection) {
-            mutableProgressVisibility.postValue(View.GONE)
-            mutablePostListVisibility.postValue(View.VISIBLE)
-            true
+    lateinit var posts: LiveData<PagedList<PostData>>
+
+    private val timelineDataSourceFactory by lazy {
+        TimelineDataSourceFactory(ioScope)
+    }
+
+    fun loadData(hasInternetConnection: Boolean) {
+        mutableProgressVisibility.value = View.VISIBLE
+
+        if (hasInternetConnection) {
+
+            posts = LivePagedListBuilder(timelineDataSourceFactory, pagedListConfig).build()
+            mutableProgressVisibility.value = View.GONE
+            mutablePostListVisibility.value = View.VISIBLE
         } else {
-            mutableProgressVisibility.postValue(View.GONE)
-            mutableErrorMessageVisibility.postValue(View.VISIBLE)
-            false
+            mutableProgressVisibility.value = View.GONE
+            mutableErrorMessageVisibility.value = View.VISIBLE
         }
     }
-
-    fun getPosts(after: String, limit: Int): LiveData<List<PostData>> {
-        if (!::posts.isInitialized) {
-            posts = MutableLiveData()
-
-            Coroutines.ioThenMain({
-                PostRepository.getPosts(after, limit)
-            }) {
-                posts.postValue(it)
-            }
-        }
-        return posts
-    }
-
 }

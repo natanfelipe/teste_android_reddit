@@ -5,8 +5,6 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
-
-
     def versionMajor = 1
     def versionMinor = 0
     def versionPatch = 0
@@ -42,6 +40,8 @@ android {
         targetCompatibility 1.8
     }
 
+    kotlinOptions.jvmTarget = "1.8"
+
     buildTypes.each {
         Properties properties = new Properties()
         properties.load(project.rootProject.file("gradle.properties").newDataInputStream())
@@ -69,6 +69,8 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    dataBinding.enabled = true
 
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
