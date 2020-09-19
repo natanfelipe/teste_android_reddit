@@ -11,8 +11,6 @@ import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.fastnews.R
-import com.fastnews.common.gone
-import com.fastnews.common.visible
 import com.fastnews.mechanism.TimeElapsed
 import com.fastnews.mechanism.VerifyNetworkInfo
 import com.fastnews.service.model.CommentData
@@ -67,33 +65,27 @@ class DetailFragment : Fragment(R.layout.fragment_detail_post) {
         populateThumbnail()
         buildOnClickDetailThumbnail()
         populateScore()
-        verifyConnectionState()
+        //verifyConnectionState()
     }
 
-    private fun verifyConnectionState() {
+    /*private fun verifyConnectionState() {
         context.let {
             if (VerifyNetworkInfo.isConnected(it!!)) {
-                hideNoConnectionState()
-                showStateProgress()
                 fetchComments()
             } else {
-                hideStateProgress()
-                showNoConnectionState()
-
                 state_without_conn_detail_post.setOnClickListener {
                     verifyConnectionState()
                 }
             }
         }
-    }
+    }*/
 
     private fun fetchComments() {
             post.let {
                 commentViewModel.getComments(postId = post!!.id).observe(viewLifecycleOwner, Observer { comments ->
                     comments.let {
                         populateComments(comments)
-                        hideStateProgress()
-                        showComments()
+
                     }
                 })
             }
@@ -112,25 +104,6 @@ class DetailFragment : Fragment(R.layout.fragment_detail_post) {
         }
     }
 
-    private fun showComments() {
-        detail_post_comments.visible()
-    }
-
-    private fun hideStateProgress() {
-        state_progress_detail_post_comments.gone()
-    }
-
-    private fun showStateProgress() {
-        state_progress_detail_post_comments.visible()
-    }
-
-    private fun showNoConnectionState() {
-        state_without_conn_detail_post.visible()
-    }
-
-    private fun hideNoConnectionState() {
-        state_without_conn_detail_post.gone()
-    }
 
     private fun populateAuthor() {
         post?.author.let {

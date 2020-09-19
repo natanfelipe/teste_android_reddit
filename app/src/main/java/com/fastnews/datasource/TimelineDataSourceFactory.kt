@@ -7,7 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 
 class TimelineDataSourceFactory(private val scope: CoroutineScope): DataSource.Factory<String, PostData>() {
 
-    private val postLiveData = MutableLiveData<TimelineDataSource>()
+    val postLiveData = MutableLiveData<TimelineDataSource>()
     private lateinit var timelineDataSource: TimelineDataSource
 
     override fun create(): DataSource<String, PostData> {
@@ -15,4 +15,6 @@ class TimelineDataSourceFactory(private val scope: CoroutineScope): DataSource.F
         postLiveData.postValue(timelineDataSource)
         return timelineDataSource
     }
+
+    fun getPostLiveDataValue() = postLiveData.value
 }

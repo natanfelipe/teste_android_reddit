@@ -3,9 +3,9 @@ package com.fastnews.mechanism
 import android.content.Context
 import android.net.ConnectivityManager
 
-object VerifyNetworkInfo {
+class VerifyNetworkInfo(private val context: Context) {
 
-    fun isConnected(context: Context): Boolean {
+    fun isConnected(): Boolean {
         var isConnected = false
         val activeNetwork = getActiveNetworkInfo(context)
         if (activeNetwork != null) {

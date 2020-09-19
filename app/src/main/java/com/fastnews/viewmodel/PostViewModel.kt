@@ -1,31 +1,17 @@
 package com.fastnews.viewmodel
 
-import android.view.View
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
+import com.fastnews.common.NetworkState
 import com.fastnews.common.PAGE_SIZE
 import com.fastnews.datasource.TimelineDataSourceFactory
-import com.fastnews.mechanism.Coroutines
-import com.fastnews.repository.PostRepository
 import com.fastnews.service.model.PostData
+import kotlinx.coroutines.cancel
 
 class PostViewModel : ViewModel() {
 
     private val ioScope = viewModelScope
-    private var mutablePostListVisibility = MutableLiveData<Int>().apply { View.GONE }
-    val postListVisibility: LiveData<Int>
-        get() = mutablePostListVisibility
-    private var mutableProgressVisibility = MutableLiveData<Int>().apply { View.VISIBLE }
-    val progressVisibility: LiveData<Int>
-        get() = mutableProgressVisibility
-    private var mutableErrorMessageVisibility = MutableLiveData<Int>().apply { View.GONE }
-    val errorMessageVisibility: LiveData<Int>
-        get() = mutableErrorMessageVisibility
-
 
     private val pagedListConfig by lazy {
         PagedList.Config.Builder()
@@ -35,23 +21,38 @@ class PostViewModel : ViewModel() {
             .build()
     }
 
-    lateinit var posts: LiveData<PagedList<PostData>>
+    var posts: LiveData<PagedList<PostData>>
 
     private val timelineDataSourceFactory by lazy {
         TimelineDataSourceFactory(ioScope)
     }
 
-    fun loadData(hasInternetConnection: Boolean) {
-        mutableProgressVisibility.value = View.VISIBLE
+    val initialLoadState: LiveData<NetworkState> = Transformations.switchMap(
+        timelineDataSourceFactory.postLiveData
+    ) {
+        it.initialLoadNetworkState
+    }
 
-        if (hasInternetConnection) {
+    val networkState: LiveData<NetworkState> = Transformations.switchMap(
+        timelineDataSourceFactory.postLiveData
+    ) {
+        it.networkState
+    }
 
-            posts = LivePagedListBuilder(timelineDataSourceFactory, pagedListConfig).build()
-            mutableProgressVisibility.value = View.GONE
-            mutablePostListVisibility.value = View.VISIBLE
-        } else {
-            mutableProgressVisibility.value = View.GONE
-            mutableErrorMessageVisibility.value = View.VISIBLE
-        }
+    init {
+        posts = LivePagedListBuilder(timelineDataSourceFactory, pagedListConfig).build()
+    }
+
+    fun retry() {
+        timelineDataSourceFactory.getPostLiveDataValue()?.retry?.invoke()
+    }
+
+    fun reloadData() {
+        timelineDataSourceFactory.getPostLiveDataValue()?.invalidate()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ioScope.coroutineContext.cancel()
     }
 }
