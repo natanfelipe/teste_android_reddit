@@ -16,7 +16,7 @@
             android:layout_height="100dp"
             android:layout_marginTop="16dp"
             android:scaleType="centerCrop"
-            app:image="@{postData.thumbnail}"
+            app:image="@{postData.preview.images}"
             android:src="@drawable/ic_placeholder"
             android:transitionName="thumbnail"
             android:visibility="gone" />

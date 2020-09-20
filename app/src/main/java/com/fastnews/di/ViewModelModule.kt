@@ -7,5 +7,5 @@ import org.koin.dsl.module
 
 val viewModelModule = module {
     viewModel { PostViewModel() }
-    viewModel { CommentViewModel() }
+    viewModel { CommentViewModel(get()) }
 }

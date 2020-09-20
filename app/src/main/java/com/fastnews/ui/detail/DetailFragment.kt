@@ -1,18 +1,20 @@
 package com.fastnews.ui.detail
 
+import android.content.Intent
 import android.os.Bundle
-import android.text.TextUtils
 import android.transition.TransitionInflater
+import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
-import com.bumptech.glide.Glide
 import com.fastnews.R
-import com.fastnews.mechanism.TimeElapsed
-import com.fastnews.mechanism.VerifyNetworkInfo
+import com.fastnews.common.KEY_POST
+import com.fastnews.common.TEXT_TYPE
+import com.fastnews.databinding.FragmentDetailPostBinding
 import com.fastnews.service.model.CommentData
 import com.fastnews.service.model.PostData
 import com.fastnews.ui.web.CustomTabsWeb
@@ -20,20 +22,16 @@ import com.fastnews.viewmodel.CommentViewModel
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.fragment_detail_post.*
 import kotlinx.android.synthetic.main.include_detail_post_thumbnail.*
-import kotlinx.android.synthetic.main.include_detail_post_title.*
-import kotlinx.android.synthetic.main.include_item_timeline_ic_score.*
-import kotlinx.android.synthetic.main.include_item_timeline_timeleft.*
+import kotlinx.android.synthetic.main.include_header_detail_post_share.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DetailFragment : Fragment(R.layout.fragment_detail_post) {
 
-    companion object {
-        val KEY_POST = "KEY_POST"
-    }
-
     private var post: PostData? = null
 
     private val commentViewModel: CommentViewModel by viewModel()
+
+    private lateinit var binding: FragmentDetailPostBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,54 +39,63 @@ class DetailFragment : Fragment(R.layout.fragment_detail_post) {
         this.arguments.let {
             post = it?.getParcelable(KEY_POST)
         }
-        sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(android.R.transition.move)
+        sharedElementEnterTransition =
+            TransitionInflater.from(context).inflateTransition(android.R.transition.move)
     }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ) = FragmentDetailPostBinding.inflate(inflater).apply {
+        binding = this
+        binding.networkStatus = networkStatus
+        binding.lifecycleOwner = viewLifecycleOwner
+        binding.postData = post
+    }.root
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         buildActionBar()
         populateUi()
+        fetchComments()
+        observeComments()
     }
 
     private fun buildActionBar() {
         val activity = activity as AppCompatActivity
 
-        //activity.setSupportActionBar(toolbar)
         activity.supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         setHasOptionsMenu(true)
     }
 
     private fun populateUi() {
-        populateAuthor()
-        populateTimeLeftValue()
-        populateTitle()
-        populateThumbnail()
         buildOnClickDetailThumbnail()
-        populateScore()
-        //verifyConnectionState()
+        populateAuthor()
+        buildOnClickShareButton()
     }
 
-    /*private fun verifyConnectionState() {
-        context.let {
-            if (VerifyNetworkInfo.isConnected(it!!)) {
-                fetchComments()
-            } else {
-                state_without_conn_detail_post.setOnClickListener {
-                    verifyConnectionState()
-                }
-            }
+    private fun populateAuthor() {
+        post?.author.let {
+            (activity as AppCompatActivity).supportActionBar?.title = it
         }
-    }*/
+    }
 
     private fun fetchComments() {
-            post.let {
-                commentViewModel.getComments(postId = post!!.id).observe(viewLifecycleOwner, Observer { comments ->
-                    comments.let {
-                        populateComments(comments)
+        post?.let { postData ->
+            commentViewModel.getComments(postData.id)
+        }
+    }
 
-                    }
-                })
-            }
+    private fun observeComments() {
+        with(commentViewModel) {
+            comments.observe(viewLifecycleOwner, Observer { comments ->
+                populateComments(comments)
+            })
+            networkState.observe(viewLifecycleOwner, Observer { networkState ->
+                binding.networkStatus = networkState
+            })
+        }
     }
 
     private fun populateComments(comments: List<CommentData>) {
@@ -104,71 +111,38 @@ class DetailFragment : Fragment(R.layout.fragment_detail_post) {
         }
     }
 
-
-    private fun populateAuthor() {
-        post?.author.let {
-            item_timeline_author.text = it
-
-            (activity as AppCompatActivity).supportActionBar?.title = it
-        }
-    }
-
-    private fun populateTimeLeftValue() {
-        post?.created_utc.let {
-            val elapsed = TimeElapsed.getTimeElapsed(it!!.toLong())
-            item_timeline_timeleft.text = elapsed
-        }
-    }
-
-    private fun populateTitle() {
-        post?.title.let {
-            item_detail_post_title.text = it
-        }
-    }
-
-    private fun populateThumbnail() {
-        val PREFIX_HTTP = "http"
-        var thumbnailUrl = ""
-
-        // TODO Fix high quality images
-        /*if(post?.preview != null) {
-            post?.preview?.images?.map {
-                if (!TextUtils.isEmpty(it.source.url)) {
-                    thumbnailUrl = it.source.url
-                }
-            }
-        }*/
-
-        if (!TextUtils.isEmpty(post?.thumbnail) && post?.thumbnail!!.startsWith(PREFIX_HTTP)) {
-            thumbnailUrl = post!!.thumbnail
-        }
-
-        if (!TextUtils.isEmpty(thumbnailUrl)) {
-            Glide.with(item_detail_post_thumbnail.context)
-                .load(thumbnailUrl)
-                .placeholder(R.drawable.ic_placeholder)
-                .into(item_detail_post_thumbnail)
-            item_detail_post_thumbnail.visibility = View.VISIBLE
-        }
-    }
-
     private fun buildOnClickDetailThumbnail() {
         item_detail_post_thumbnail.setOnClickListener {
-            if(!post?.url.isNullOrEmpty()) {
+            if (!post?.url.isNullOrEmpty()) {
                 requireContext().let {
                     val customTabsWeb = CustomTabsWeb(it, post?.url!!)
                     customTabsWeb.openUrlWithCustomTabs()
                 }
             } else {
-                Snackbar.make(item_detail_post_thumbnail, R.string.error_detail_post_url, Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(
+                    item_detail_post_thumbnail,
+                    R.string.error_detail_post_url,
+                    Snackbar.LENGTH_SHORT
+                ).show()
             }
         }
     }
 
-    private fun populateScore() {
-        post?.score.let {
-            item_timeline_bt_score_text.text = it.toString()
+    private fun buildOnClickShareButton() {
+        bt_share.setOnClickListener{
+            createShareIntent()
         }
+    }
+
+    private fun createShareIntent() {
+        val intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, post?.url)
+            type = TEXT_TYPE
+        }
+
+        val shareIntent = Intent.createChooser(intent, null)
+        startActivity(shareIntent)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
