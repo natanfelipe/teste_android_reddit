@@ -9,10 +9,15 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DefaultItemAnimator
 import com.fastnews.R
+import com.fastnews.common.NetworkState
 import com.fastnews.databinding.FragmentTimelineBinding
 import com.fastnews.ui.timeline.adapters.TimelineAdapter
+import com.fastnews.util.EspressoIdlingResources
 import com.fastnews.viewmodel.PostViewModel
 import kotlinx.android.synthetic.main.fragment_timeline.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
@@ -57,14 +62,18 @@ class TimelineFragment : Fragment() {
 
     private fun loadData() {
         with(postViewModel) {
+            EspressoIdlingResources.increment()
+
             initialLoadState.observe(viewLifecycleOwner, Observer {
                 binding.networkStatus = it
+
             })
             networkState.observe(viewLifecycleOwner, Observer {
                 adapter.updateNetworkState(it)
             })
             posts.observe(viewLifecycleOwner, Observer {
                 adapter.submitList(it)
+                EspressoIdlingResources.decrement()
             })
         }
     }

@@ -25,8 +25,6 @@ class PostViewModel : ViewModel() {
 
     var posts: LiveData<PagedList<PostData>>
 
-
-
     val initialLoadState: LiveData<NetworkState> = Transformations.switchMap(
         timelineDataSourceFactory.postLiveData
     ) {

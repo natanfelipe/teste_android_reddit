@@ -10,6 +10,7 @@ import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.fastnews.R
+import com.fastnews.common.KEY_POST
 import com.fastnews.common.NetworkState
 import com.fastnews.databinding.ItemTimelineBinding
 import com.fastnews.databinding.ItemTimelineNetworkStateBinding
@@ -113,7 +114,7 @@ class TimelineAdapter:
                         view.item_timeline_thumbnail to "thumbnail"
                     )
                     val bundle = Bundle()
-                    bundle.putParcelable(DetailFragment.KEY_POST, post)
+                    bundle.putParcelable(KEY_POST, post)
                     Navigation.findNavController(view)
                         .navigate(R.id.action_timeline_to_detail, bundle, null, extras)
                 }
