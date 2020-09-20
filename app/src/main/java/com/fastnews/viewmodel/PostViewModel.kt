@@ -12,7 +12,9 @@ import kotlinx.coroutines.cancel
 class PostViewModel : ViewModel() {
 
     private val ioScope = viewModelScope
-
+    private val timelineDataSourceFactory by lazy {
+        TimelineDataSourceFactory(ioScope)
+    }
     private val pagedListConfig by lazy {
         PagedList.Config.Builder()
             .setPageSize(PAGE_SIZE)
@@ -23,20 +25,18 @@ class PostViewModel : ViewModel() {
 
     var posts: LiveData<PagedList<PostData>>
 
-    private val timelineDataSourceFactory by lazy {
-        TimelineDataSourceFactory(ioScope)
-    }
+
 
     val initialLoadState: LiveData<NetworkState> = Transformations.switchMap(
         timelineDataSourceFactory.postLiveData
     ) {
-        it.initialLoadNetworkState
+        it.getInitialLoadNetworkState()
     }
 
     val networkState: LiveData<NetworkState> = Transformations.switchMap(
         timelineDataSourceFactory.postLiveData
     ) {
-        it.networkState
+        it.getCurrentNetworkState()
     }
 
     init {

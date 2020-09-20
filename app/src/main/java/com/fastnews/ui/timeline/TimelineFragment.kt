@@ -19,7 +19,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class TimelineFragment : Fragment() {
 
     private val postViewModel: PostViewModel by viewModel()
-    private lateinit var adapter: TimelineAdapter
+    private val adapter = TimelineAdapter()
     private lateinit var binding: FragmentTimelineBinding
 
     override fun onCreateView(
@@ -27,10 +27,9 @@ class TimelineFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? = FragmentTimelineBinding.inflate(inflater).apply {
-            binding = this
-            binding.viewModel = postViewModel
-            binding.lifecycleOwner = viewLifecycleOwner
-        }.root
+        binding = this
+        binding.lifecycleOwner = viewLifecycleOwner
+    }.root
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -52,7 +51,6 @@ class TimelineFragment : Fragment() {
     }
 
     private fun buildTimeline() {
-        adapter = TimelineAdapter()
         timeline_rv.itemAnimator = DefaultItemAnimator()
         timeline_rv.adapter = adapter
     }
@@ -63,9 +61,8 @@ class TimelineFragment : Fragment() {
                 binding.networkStatus = it
             })
             networkState.observe(viewLifecycleOwner, Observer {
-                binding.networkStatus = it
+                adapter.updateNetworkState(it)
             })
-
             posts.observe(viewLifecycleOwner, Observer {
                 adapter.submitList(it)
             })

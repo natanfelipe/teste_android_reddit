@@ -1,5 +1,6 @@
 package com.fastnews.datasource
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.paging.ItemKeyedDataSource
 import com.fastnews.common.NetworkState
@@ -10,10 +11,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-class TimelineDataSource(private val scope: CoroutineScope): ItemKeyedDataSource<String, PostData>() {
+class TimelineDataSource(private val scope: CoroutineScope) :
+    ItemKeyedDataSource<String, PostData>() {
 
-    val networkState: MutableLiveData<NetworkState> = MutableLiveData()
-    val initialLoadNetworkState = MutableLiveData<NetworkState>()
+    private val currentNetworkState: MutableLiveData<NetworkState> = MutableLiveData()
+    private val initialLoadNetworkState = MutableLiveData<NetworkState>()
+
     private val job = Job()
 
     private val initialLoadHandler = CoroutineExceptionHandler { _, _ ->
@@ -21,7 +24,7 @@ class TimelineDataSource(private val scope: CoroutineScope): ItemKeyedDataSource
     }
 
     private val handler = CoroutineExceptionHandler { _, _ ->
-        networkState.postValue(NetworkState.FAILED)
+        currentNetworkState.postValue(NetworkState.FAILED)
     }
 
     var retry: (() -> Any)? = null
@@ -30,13 +33,13 @@ class TimelineDataSource(private val scope: CoroutineScope): ItemKeyedDataSource
         params: LoadInitialParams<String>,
         callback: LoadInitialCallback<PostData>
     ) {
-        retry = {loadInitial(params, callback)}
-        getPosts("", params.requestedLoadSize, callback)
+        retry = { loadInitial(params, callback) }
+        getPosts("", params.requestedLoadSize, callback, initialLoadNetworkState)
     }
 
     override fun loadAfter(params: LoadParams<String>, callback: LoadCallback<PostData>) {
-        retry = {loadAfter(params, callback)}
-        getPosts(params.key, params.requestedLoadSize,  callback)
+        retry = { loadAfter(params, callback) }
+        getPosts(params.key, params.requestedLoadSize, callback, currentNetworkState)
     }
 
     override fun loadBefore(params: LoadParams<String>, callback: LoadCallback<PostData>) {}
@@ -46,24 +49,27 @@ class TimelineDataSource(private val scope: CoroutineScope): ItemKeyedDataSource
     private fun getPosts(
         after: String,
         requestLoadSize: Int,
-        callback: LoadCallback<PostData>
+        callback: LoadCallback<PostData>,
+        networkState: MutableLiveData<NetworkState>
     ) {
-        networkState.postValue(NetworkState.RUNNING)
-
         val exceptionHandler =
             if (after.isEmpty()) {
-            initialLoadHandler
-        }
-        else {
-            handler
-        }
+                initialLoadHandler
+            } else {
+                handler
+            }
 
+        networkState.postValue(NetworkState.RUNNING)
         scope.launch(exceptionHandler + job) {
             val response = PostRepository.getPosts(after, requestLoadSize)
             networkState.postValue(NetworkState.SUCCESS)
             callback.onResult(response)
         }
     }
+
+    fun getInitialLoadNetworkState(): LiveData<NetworkState> = initialLoadNetworkState
+
+    fun getCurrentNetworkState(): LiveData<NetworkState> = currentNetworkState
 
     override fun invalidate() {
         super.invalidate()
