@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.core.text.HtmlCompat
 import androidx.databinding.BindingAdapter
 import com.bumptech.glide.Glide
+import com.fastnews.R
 import com.fastnews.mechanism.TimeElapsed
 import com.fastnews.service.model.PreviewImage
 
@@ -27,7 +28,7 @@ fun loadImage(imageView: ImageView, images: List<PreviewImage>?) {
     if (!TextUtils.isEmpty(url) && url.startsWith(PREFIX_HTTP)) {
         Glide.with(imageView.context)
             .load(url)
-            .placeholder(ColorDrawable(Color.LTGRAY))
+            .placeholder(R.drawable.ic_placeholder)
             .error(ColorDrawable(Color.DKGRAY))
             .into(imageView)
         imageView.visible()
