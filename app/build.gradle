@@ -142,6 +142,8 @@ dependencies {
     implementation "org.koin:koin-androidx-viewmodel:$koin_version"
     implementation "org.koin:koin-core-ext:$koin_version"
 
+    implementation "androidx.paging:paging-runtime-ktx:$paging_version"
+    testImplementation "androidx.paging:paging-common-ktx:$paging_version"
 
     // Bottom sheet
     implementation 'com.flipboard:bottomsheet-core:1.5.0'
