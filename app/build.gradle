@@ -172,7 +172,7 @@ dependencies {
     testImplementation "android.arch.core:core-testing:1.1.1"
 
     implementation "androidx.test.espresso:espresso-idling-resource:$espresso_version"
-    
+
     // Mockk
     testImplementation "io.mockk:mockk:$mockk_version"
 }
