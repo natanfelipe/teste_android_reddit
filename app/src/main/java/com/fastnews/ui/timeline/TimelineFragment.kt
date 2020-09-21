@@ -24,7 +24,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class TimelineFragment : Fragment() {
 
     private val postViewModel: PostViewModel by viewModel()
-    private val adapter = TimelineAdapter()
+    private lateinit var adapter: TimelineAdapter
     private lateinit var binding: FragmentTimelineBinding
 
     override fun onCreateView(
@@ -56,6 +56,7 @@ class TimelineFragment : Fragment() {
     }
 
     private fun buildTimeline() {
+        adapter = TimelineAdapter { postViewModel.retry() }
         timeline_rv.itemAnimator = DefaultItemAnimator()
         timeline_rv.adapter = adapter
     }

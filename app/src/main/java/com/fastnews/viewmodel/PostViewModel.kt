@@ -42,11 +42,11 @@ class PostViewModel : ViewModel() {
     }
 
     fun retry() {
-        timelineDataSourceFactory.getPostLiveDataValue()?.retry?.invoke()
+        timelineDataSourceFactory.getPostLiveDataValue()?.doRetry()
     }
 
     fun reloadData() {
-        timelineDataSourceFactory.getPostLiveDataValue()?.invalidate()
+        timelineDataSourceFactory.getPostLiveDataValue()?.refreshAll()
     }
 
     override fun onCleared() {

@@ -13,7 +13,6 @@ import com.fastnews.service.model.PreviewImage
 
 @BindingAdapter("app:image")
 fun loadImage(imageView: ImageView, images: List<PreviewImage>?) {
-
     var url = ""
 
     images?.let { list ->

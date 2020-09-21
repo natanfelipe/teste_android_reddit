@@ -16,15 +16,15 @@ import com.fastnews.databinding.ItemTimelineBinding
 import com.fastnews.databinding.ItemTimelineNetworkStateBinding
 import com.fastnews.interfaces.OnClickItemList
 import com.fastnews.service.model.PostData
-import com.fastnews.ui.detail.DetailFragment
 import com.fastnews.ui.timeline.viewholders.NetworkStateViewHolder
 import com.fastnews.ui.timeline.viewholders.TimelineItemViewHolder
 import kotlinx.android.synthetic.main.include_item_timeline_thumbnail.view.*
+import java.lang.IllegalArgumentException
 
-class TimelineAdapter:
+class TimelineAdapter(private val retryCallback: () -> Unit) :
     PagedListAdapter<PostData, RecyclerView.ViewHolder>(PostDiffUtilCallback), OnClickItemList {
 
-    private var currentState = NetworkState.RUNNING
+    private var currentState: NetworkState? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -36,7 +36,7 @@ class TimelineAdapter:
             }
             R.layout.item_timeline_network_state -> {
                 val view = ItemTimelineNetworkStateBinding.inflate(inflater, parent, false)
-                NetworkStateViewHolder(view)
+                NetworkStateViewHolder(view, retryCallback)
             }
             else -> {
                 throw IllegalArgumentException("")
@@ -47,17 +47,15 @@ class TimelineAdapter:
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (getItemViewType(position)) {
             R.layout.item_timeline -> {
-                getItem(position)?.let { postData ->
-                    (holder as TimelineItemViewHolder).itemViewType.apply {
-                        holder.bind(postData)
+                getItem(position)?.let {
+                    (holder as TimelineItemViewHolder).view.apply {
+                        holder.bind(it)
                         holder.view.click = this@TimelineAdapter
                     }
                 }
             }
-            R.layout.item_timeline_network_state -> {
-                (holder as NetworkStateViewHolder).itemView.apply {
-                    holder.bind(currentState)
-                }
+            R.layout.item_timeline_network_state -> currentState?.let {
+                (holder as NetworkStateViewHolder).bind(it)
             }
         }
     }
@@ -79,7 +77,8 @@ class TimelineAdapter:
                 val previousState = currentState
                 val hadToLoadMore = hasMorePostsToLoad()
                 currentState = state
-                if (hadToLoadMore != hasMorePostsToLoad()) {
+                val hasToLoadMore = hasMorePostsToLoad()
+                if (hadToLoadMore != hasToLoadMore) {
                     if (hadToLoadMore) {
                         notifyItemRemoved(super.getItemCount())
                     } else {
