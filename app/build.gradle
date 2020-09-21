@@ -4,12 +4,9 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
+apply plugin: 'kotlin-kapt'
+
 android {
-
-    // Keys for buildConfigFields
-    def API_ENDPOINT = "API_ENDPOINT"
-    def API_ENDPOINT_REDDIT = '"https://www.reddit.com/r/Android/"'
-
     def versionMajor = 1
     def versionMinor = 0
     def versionPatch = 0
@@ -40,26 +37,42 @@ android {
         }
     }
 
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+
+    kotlinOptions.jvmTarget = "1.8"
+
+    buildTypes.each {
+        Properties properties = new Properties()
+        properties.load(project.rootProject.file("gradle.properties").newDataInputStream())
+        def baseUrl = properties.getProperty("baseUrl")
+
+        it.buildConfigField "String", "API_ENDPOINT", "\""+baseUrl+ "\""
+    }
+
     buildTypes {
         release {
             minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
             proguardFiles(
                     'proguard/proguard-android-support.pro',
                     'proguard/proguard-retrofit.pro',
                     'proguard/proguard-project.pro',
                     'proguard/proguard-okio.pro')
-            buildConfigField "String", API_ENDPOINT, API_ENDPOINT_REDDIT
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 
             signingConfig signingConfigs.release
         }
 
-        debug {
+        debug{
             minifyEnabled false
-            buildConfigField "String", API_ENDPOINT, API_ENDPOINT_REDDIT
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    dataBinding.enabled = true
 
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
@@ -92,52 +105,76 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-beta2'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
 
-    // Test
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:runner:1.2.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     // Kotlin coroutines
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$rootProject.coroutinesVersion"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$rootProject.coroutinesVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
 
     // Retrofit
-    implementation "com.squareup.retrofit2:retrofit:$rootProject.retrofitVersion"
-    implementation "com.squareup.retrofit2:converter-gson:$rootProject.retrofitVersion"
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
     implementation 'com.jakewharton.retrofit:retrofit2-kotlin-coroutines-adapter:0.9.2'
 
     //Okhttp3
-    implementation "com.squareup.okhttp3:okhttp:3.14.2"
+    implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
 
     // Lifecycle
-    implementation "androidx.lifecycle:lifecycle-viewmodel:$rootProject.archLifecycleVersion"
-    implementation "androidx.lifecycle:lifecycle-extensions:$rootProject.archLifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-viewmodel:$arch_lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-extensions:$arch_lifecycle_version"
 
     // ViewModel Kotlin support
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$rootProject.archLifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$arch_lifecycle_version"
 
     // Extensions
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.1.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
 
     // Glide
-    implementation("com.github.bumptech.glide:glide:4.9.0") {
+    implementation("com.github.bumptech.glide:glide:$glide_version") {
         exclude group: "com.android.support"
     }
+    annotationProcessor "com.github.bumptech.glide:compiler:$glide_version"
 
-    // CardView
-    implementation 'androidx.cardview:cardview:1.0.0'
+    //Koin
+    implementation "org.koin:koin-androidx-scope:$koin_version"
+    implementation "org.koin:koin-androidx-viewmodel:$koin_version"
+    implementation "org.koin:koin-core-ext:$koin_version"
+
+    implementation "androidx.paging:paging-runtime-ktx:$paging_version"
+    testImplementation "androidx.paging:paging-common-ktx:$paging_version"
 
     // Bottom sheet
     implementation 'com.flipboard:bottomsheet-core:1.5.0'
 
     // Navigation
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.1.0'
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation "androidx.navigation:navigation-fragment-ktx:$navigation_version"
+    implementation 'com.google.android.material:material:1.2.1'
 
     // Custom tabs
     implementation 'com.android.support:customtabs:28.0.0'
 
+    // Test
+    testImplementation 'junit:junit:4.13'
+    androidTestImplementation 'androidx.test:runner:1.3.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
+    androidTestImplementation "androidx.test.espresso:espresso-contrib:$espresso_version"
+
+    testImplementation "org.koin:koin-test:$koin_version"
+    androidTestImplementation 'androidx.test:rules:1.3.0'
+
+    // testImplementation for pure JVM unit tests
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
+
+    // androidTestImplementation for Android instrumentation tests
+    androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines_version"
+
+    testImplementation "android.arch.core:core-testing:1.1.1"
+
+    implementation "androidx.test.espresso:espresso-idling-resource:$espresso_version"
+
+    // Mockk
+    testImplementation "io.mockk:mockk:$mockk_version"
 }

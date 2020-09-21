@@ -1,28 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
-    android:layout_height="match_parent"
-    android:layout_weight="1"
-    android:gravity="center"
-    android:orientation="horizontal"
-    tools:showIn="@layout/item_timeline">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools">
+    <data>
+        <variable
+                name="postData"
+                type="com.fastnews.service.model.PostData" />
+    </data>
 
-    <ImageView
-        android:layout_width="22dp"
-        android:layout_height="22dp"
-        android:src="@drawable/ic_comments" />
+    <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="horizontal"
+            tools:showIn="@layout/item_timeline">
 
-    <com.fastnews.mechanism.FontTextView
-        app:textFont="@string/font_roboto_light"
-        style="@style/Font12sp.GrayText"
-        android:id="@+id/item_timeline_bt_comments_text"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_marginStart="8dp"
-        android:gravity="left|center"
-        tools:showIn="@layout/include_item_timeline_timeleft"
-        tools:text="129" />
+        <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_comments" />
 
-</LinearLayout>
+        <com.fastnews.mechanism.FontTextView
+                app:textFont="@string/font_roboto_light"
+                style="@style/Font12sp.GrayText"
+                android:id="@+id/item_timeline_bt_comments_text"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"
+                android:gravity="left|center"
+                android:text="@{Integer.toString(postData.num_comments)}"
+                tools:showIn="@layout/include_item_timeline_timeleft"
+                tools:text="129" />
+
+    </LinearLayout>
+
+</layout>
